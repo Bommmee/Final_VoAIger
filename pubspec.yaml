@@ -63,7 +63,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/seoul_db.csv
+    - assets/seoul_db2.csv
     - assets/gifs/icon.gif
   # To add assets to your application, add an assets section, like this:
   # assets:

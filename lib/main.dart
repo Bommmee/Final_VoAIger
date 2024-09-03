@@ -18,11 +18,14 @@ class CityExplorerApp extends StatelessWidget {
 }
 
 class CitySelectionPage extends StatelessWidget {
+  final Color koreaColor = Color(0xFF219de7); // 대한민국 도시용 하늘색
+  final Color europeColor = Color(0xFFf7b410); // 유럽 도시용 노란색
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: Text('Explore Any Cities'),
+        middle: Text('원하는 도시를 선택하기'),
       ),
       child: SafeArea(
         child: Column(
@@ -30,18 +33,40 @@ class CitySelectionPage extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'With AI Guide Anytime',
-                style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'With AI Guide Anytime',
+                    style:
+                        CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+                  ),
+                  CupertinoButton(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    color: Color(0xFF014b88), // 브랜드 네이비 컬러
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Text(
+                      '한/Eng',
+                      style: TextStyle(
+                        color: CupertinoColors.white,
+                        fontSize: 12.0, // 폰트 크기 줄임
+                      ),
+                    ),
+                    onPressed: () {
+                      // 언어 전환 로직을 추가하려면 여기에 작성
+                    },
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 16),
-            _buildSectionTitle(context, 'Korea'),
-            _buildCityGrid(
-                context, ['Seoul', 'Busan', 'Incheon', 'Jeju Island']),
+            _buildSectionTitle(context, '대한민국'),
+            _buildCityGrid(context, ['서울', '부산', '인천', '제주도'], isKorea: true),
             SizedBox(height: 32),
-            _buildSectionTitle(context, 'Europe'),
-            _buildCityGrid(context, ['Paris', 'London', 'Barcelona', 'Rome']),
+            _buildSectionTitle(context, '유럽'),
+            _buildCityGrid(context, ['파리', '런던', '바르셀로나', '로마'],
+                isKorea: false),
           ],
         ),
       ),
@@ -58,7 +83,8 @@ class CitySelectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCityGrid(BuildContext context, List<String> cities) {
+  Widget _buildCityGrid(BuildContext context, List<String> cities,
+      {required bool isKorea}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GridView.builder(
@@ -72,10 +98,11 @@ class CitySelectionPage extends StatelessWidget {
         ),
         itemBuilder: (context, index) {
           return CupertinoButton(
-            color: CupertinoColors.systemGrey4,
+            color: isKorea ? koreaColor : europeColor,
             padding: EdgeInsets.all(16.0),
+            borderRadius: BorderRadius.circular(12.0),
             onPressed: () {
-              if (cities[index] == 'Seoul') {
+              if (cities[index] == '서울') {
                 Navigator.push(
                   context,
                   CupertinoPageRoute(
@@ -86,7 +113,7 @@ class CitySelectionPage extends StatelessWidget {
             },
             child: Text(
               cities[index],
-              style: TextStyle(color: CupertinoColors.black),
+              style: TextStyle(color: CupertinoColors.white),
             ),
           );
         },

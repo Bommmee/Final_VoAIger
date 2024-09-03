@@ -49,12 +49,12 @@ class _SpotPageState extends State<SpotPage> {
   void initializeModel() {
     model = GenerativeModel(
       model: 'gemini-1.5-flash-latest',
-      apiKey: 'api',
+      apiKey: 'your-api-key',
     );
   }
 
   Future<void> _loadCSV() async {
-    final rawData = await rootBundle.loadString('assets/seoul_db.csv');
+    final rawData = await rootBundle.loadString('assets/seoul_db2.csv');
     List<List<dynamic>> listData =
         const CsvToListConverter().convert(rawData, eol: '\n');
 
@@ -66,6 +66,7 @@ class _SpotPageState extends State<SpotPage> {
         'description': data[3].toString(),
         'latitude': _parseLatLng(data[7].toString())[0],
         'longitude': _parseLatLng(data[7].toString())[1],
+        'image': data[9].toString(),
       };
     }).toList();
 
@@ -145,8 +146,15 @@ class _SpotPageState extends State<SpotPage> {
     }
   }
 
+  String cleanUrl(String url) {
+    return url.trim().replaceAll(RegExp(r'[\r\n]+'), '');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String imageUrl =
+        closestLandmark != null ? cleanUrl(closestLandmark!['image']) : '';
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(closestLandmark?['name'] ?? 'No Landmark'),
@@ -154,7 +162,7 @@ class _SpotPageState extends State<SpotPage> {
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Icon(CupertinoIcons.share),
-          onPressed: _shareMergedImage,
+          onPressed: _shareMergedImage, // 이미지를 공유할 때 _shareMergedImage 호출
         ),
       ),
       child: SafeArea(
@@ -167,23 +175,37 @@ class _SpotPageState extends State<SpotPage> {
                   children: [
                     RepaintBoundary(
                       key: _globalKey,
-                      child:
-                          GifWithText(landmarkName: closestLandmark!['name']),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      closestLandmark!['name'],
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      closestLandmark!['description'],
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: CupertinoColors.black,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 200,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.0),
+                              image: DecorationImage(
+                                image: NetworkImage(imageUrl),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            closestLandmark!['name'],
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            closestLandmark!['description'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: CupertinoColors.black,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(height: 16),
@@ -262,6 +284,7 @@ class _SpotPageState extends State<SpotPage> {
                                 builder: (context) => LandmarkDetailsPage(
                                   landmarkName: landmark['name'],
                                   description: landmark['description'],
+                                  imageUrl: cleanUrl(landmark['image']),
                                   landmarksData: landmarksData,
                                   currentPosition: Position(
                                     latitude: widget.currentLatitude,
@@ -337,37 +360,5 @@ class _SpotPageState extends State<SpotPage> {
     }
 
     _textController.clear();
-  }
-}
-
-class GifWithText extends StatelessWidget {
-  final String landmarkName;
-
-  const GifWithText({required this.landmarkName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      children: [
-        Image.asset(
-          'assets/gifs/icon.gif',
-          width: 200,
-          height: 200,
-          fit: BoxFit.cover,
-        ),
-        Positioned(
-          bottom: -5,
-          child: Text(
-            landmarkName,
-            style: TextStyle(
-              color: Color(0xFF7E59CC),
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

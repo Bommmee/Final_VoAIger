@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -12,6 +12,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 class LandmarkDetailsPage extends StatefulWidget {
   final String landmarkName;
   final String description;
+  final String imageUrl;
   final List<Map<String, dynamic>> landmarksData;
   final Position currentPosition;
 
@@ -19,6 +20,7 @@ class LandmarkDetailsPage extends StatefulWidget {
     Key? key,
     required this.landmarkName,
     required this.description,
+    required this.imageUrl,
     required this.landmarksData,
     required this.currentPosition,
   }) : super(key: key);
@@ -47,7 +49,7 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
   void initializeModel() {
     model = GenerativeModel(
       model: 'gemini-1.5-flash-latest',
-      apiKey: 'api',
+      apiKey: 'your-api-key',
     );
   }
 
@@ -68,11 +70,14 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
       return distanceA.compareTo(distanceB);
     });
 
-    // 현재 보고 있는 랜드마크를 제외한 가장 가까운 3개의 랜드마크 선택
     closestLandmarks = sortedLandmarks
         .where((landmark) => landmark['name'] != widget.landmarkName)
         .take(3)
         .toList();
+  }
+
+  String cleanUrl(String url) {
+    return url.trim().replaceAll(RegExp(r'[\r\n]+'), '');
   }
 
   Future<void> _shareMergedImage() async {
@@ -119,6 +124,8 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final String imageUrl = cleanUrl(widget.imageUrl);
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(widget.landmarkName),
@@ -126,7 +133,7 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Icon(CupertinoIcons.share),
-          onPressed: _shareMergedImage,
+          onPressed: _shareMergedImage, // 이미지를 공유할 때 _shareMergedImage 호출
         ),
       ),
       child: SafeArea(
@@ -137,7 +144,17 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
             children: [
               RepaintBoundary(
                 key: _globalKey,
-                child: GifWithText(landmarkName: widget.landmarkName),
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                    image: DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
               ),
               SizedBox(height: 16),
               Text(
@@ -229,6 +246,7 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
                           builder: (context) => LandmarkDetailsPage(
                             landmarkName: landmark['name'],
                             description: landmark['description'],
+                            imageUrl: cleanUrl(landmark['image']),
                             landmarksData: widget.landmarksData,
                             currentPosition: widget.currentPosition,
                           ),
@@ -302,37 +320,5 @@ class _LandmarkDetailsPageState extends State<LandmarkDetailsPage> {
         lat,
         lon);
     return '${(distance / 10).round() * 10}m'; // 10미터 단위로 반올림
-  }
-}
-
-class GifWithText extends StatelessWidget {
-  final String landmarkName;
-
-  const GifWithText({required this.landmarkName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      children: [
-        Image.asset(
-          'assets/gifs/icon.gif',
-          width: 200,
-          height: 200,
-          fit: BoxFit.cover,
-        ),
-        Positioned(
-          bottom: -5,
-          child: Text(
-            landmarkName,
-            style: TextStyle(
-              color: Color(0xFF7E59CC),
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
